@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Github AI 插件装前自检</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2064%2064'%3E%3Crect%20width%3D'64'%20height%3D'64'%20rx%3D'14'%20fill%3D'%230e1116'%2F%3E%3Cpath%20d%3D'M30%207%20L48%2014.5%20V29%20C48%2040%2040%2048.5%2030%2052.5%20C20%2048.5%2012%2040%2012%2029%20V14.5%20Z'%20fill%3D'none'%20stroke%3D'%2358a6ff'%20stroke-width%3D'4'%2F%3E%3Ccircle%20cx%3D'37'%20cy%3D'36'%20r%3D'12'%20fill%3D'%230e1116'%20stroke%3D'%23e6edf3'%20stroke-width%3D'4.5'%2F%3E%3Cpath%20d%3D'M46%2045%20L55%2054'%20stroke%3D'%23e6edf3'%20stroke-width%3D'5.5'%20stroke-linecap%3D'round'%2F%3E%3C%2Fsvg%3E">
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --line:#232a35; --txt:#e6edf3; --dim:#8b949e;
+  --a:#3fb950; --b:#d29922; --c:#db6d28; --d:#f85149; --blue:#58a6ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:.5px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:24px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.head .sub{margin-bottom:0}
+.head-right{display:flex;gap:10px;flex-shrink:0;padding-top:4px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=text],input[type=password]{
+  flex:1;min-width:260px;background:#0b0f14;border:1px solid var(--line);color:var(--txt);
+  padding:11px 13px;border-radius:8px;font:13px/1.4 ui-monospace,Consolas,monospace;outline:none}
+input:focus{border-color:var(--blue)}
+button{
+  background:var(--blue);color:#04121f;border:0;padding:11px 22px;border-radius:8px;
+  font-weight:700;font-size:14px;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);font-weight:500;padding:8px 14px;font-size:12px}
+.hint{color:var(--dim);font-size:12px;margin-top:8px}
+.chk{display:inline-flex;align-items:center;gap:6px;color:var(--dim);font-size:13px;cursor:pointer;user-select:none}
+.chk input{accent-color:var(--blue);cursor:pointer}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:14px;margin:0 0 12px;color:var(--dim);font-weight:600;letter-spacing:.4px}
+.verdict{border-radius:12px;padding:20px 22px;margin-top:18px;border:1px solid;display:none}
+.verdict.show{display:block}
+.v-A{background:rgba(63,185,80,.09);border-color:rgba(63,185,80,.45)}
+.v-B{background:rgba(210,153,34,.09);border-color:rgba(210,153,34,.45)}
+.v-C{background:rgba(219,109,40,.09);border-color:rgba(219,109,40,.45)}
+.v-D{background:rgba(248,81,73,.09);border-color:rgba(248,81,73,.45)}
+.vtier{font-size:12px;letter-spacing:2px;font-weight:700;opacity:.9}
+.vline{font-size:19px;font-weight:700;margin:6px 0 2px;line-height:1.45}
+.vfix{color:var(--dim);font-size:13px;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font-weight:600;font-size:12px;letter-spacing:.3px}
+td.k{color:var(--dim);white-space:nowrap;width:130px}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.badge{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.b-critical{background:rgba(248,81,73,.16);color:#ff7b72}
+.b-high{background:rgba(219,109,40,.16);color:#ffa657}
+.b-info{background:rgba(88,166,255,.13);color:#79c0ff}
+.b-ok{background:rgba(63,185,80,.13);color:#56d364}
+.ev{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin:10px 0}
+.ev.critical{border-color:var(--d)} .ev.high{border-color:var(--c)} .ev.info{border-color:var(--blue)}
+.ev .h{font-size:13px;font-weight:600}
+.ev .m{color:var(--dim);font-size:12px;margin:2px 0 6px}
+.ev pre{background:#0b0f14;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:0;overflow-x:auto;font-size:12px;color:#adbac7}
+.log{font:12px/1.8 ui-monospace,Consolas,monospace;color:var(--dim);max-height:200px;overflow:auto}
+.log b{color:var(--blue);font-weight:500}
+.empty{color:var(--dim);font-size:13px}
+ul.tight{margin:6px 0 0;padding-left:20px}
+ul.tight li{margin:3px 0}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;font:12px ui-monospace,Consolas,monospace;color:var(--dim)}
+.err{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:#ff7b72;padding:12px 14px;border-radius:8px;margin-top:14px;display:none;white-space:pre-wrap;font-size:13px}
+
+/* ---- 教学弹窗 ---- */
+.modal{position:fixed;inset:0;background:rgba(4,7,10,.75);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50;backdrop-filter:blur(2px)}
+.modal.show{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:740px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);border-radius:14px 14px 0 0;z-index:2}
+.modal-head h3{margin:0;font-size:15px;letter-spacing:.3px}
+.mclose{background:transparent;border:0;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px}
+.mclose:hover{color:var(--txt);background:#0b0f14}
+.modal-body{padding:20px 22px 28px}
+.modal-body h4{margin:22px 0 8px;font-size:13.5px;color:var(--blue);letter-spacing:.3px}
+.modal-body h4:first-child{margin-top:0}
+.modal-body p,.modal-body li{font-size:13.5px;color:#c3cbd4;line-height:1.8;margin:4px 0}
+.modal-body ol,.modal-body ul{padding-left:20px;margin:6px 0}
+.modal-body code{background:#0b0f14;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font:12.5px ui-monospace,Consolas,monospace;color:#adbac7}
+.modal-body .note{border-left:3px solid var(--line);padding:8px 12px;margin:10px 0;background:#0b0f14;border-radius:0 6px 6px 0}
+.modal-body .tbl{width:100%;border-collapse:collapse;margin:8px 0;font-size:13px}
+.modal-body .tbl td,.modal-body .tbl th{padding:6px 8px;border-bottom:1px solid var(--line)}
+.modal-body .tbl th{color:var(--dim);font-size:12px;text-align:left;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>Github AI 插件装前自检</h1>
+      <div class="sub">贴 GitHub 链接 → 只读拉取代码 → 出六问结论。全程不安装、不构建、不执行被检代码。</div>
+    </div>
+    <div class="head-right">
+      <button id="help" class="ghost">使用教学</button>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:22px">
+    <input id="url" type="text" placeholder="https://github.com/owner/repo  或  .../tree/main/subdir" spellcheck="false">
+    <input id="pat" type="password" placeholder="可选 GitHub Token（只存在内存）" style="flex:0 0 280px">
+    <button id="go">开始体检</button>
+  </div>
+  <div class="row" style="margin-top:10px;align-items:center">
+    <label class="chk"><input id="jsd" type="checkbox"> 零额度模式（走 jsDelivr，不消耗 GitHub API）</label>
+  </div>
+  <div class="hint">不填 Token 时 GitHub API 限额 60 次/小时（按 IP 算，同一网络共用）。额度用尽会自动切到 jsDelivr，或直接勾选上面的零额度模式。</div>
+
+  <div id="err" class="err"></div>
+  <div id="logcard" class="card" style="display:none">
+    <h2>扫描过程</h2>
+    <div id="log" class="log"></div>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>使用教学</h3>
+      <button id="mclose" class="mclose" title="关闭（Esc）">×</button>
+    </div>
+    <div class="modal-body">
+
+      <h4>一、三步上手</h4>
+      <ol>
+        <li>把插件的 GitHub 网址贴进第一个输入框，支持三种写法：
+          <ul>
+            <li><code>https://github.com/作者/仓库</code> —— 审整个仓库</li>
+            <li><code>https://github.com/作者/仓库/tree/main/plugins/xxx</code> —— 只审某个子目录</li>
+            <li><code>https://github.com/作者/仓库/releases/tag/v1.0.0</code> —— 审默认分支（版本号会记进报告）</li>
+          </ul>
+        </li>
+        <li>（可选）填 GitHub Token，见第二节。不填也能用，只是次数少。</li>
+        <li>点「开始体检」，等 5~20 秒，报告最上面第一行就是结论。</li>
+      </ol>
+
+      <h4>二、GitHub Token 怎么弄（30 秒）</h4>
+      <p>Token 只用来提高 API 调用次数，<b>不填也能跑</b>。读公开仓库<b>一个权限都不用勾</b>。</p>
+      <ol>
+        <li>登录 GitHub，打开 <code>github.com/settings/tokens</code></li>
+        <li>点 <b>Generate new token</b> → 选 <b>Generate new token (classic)</b></li>
+        <li>Note 随便写，比如 <code>plugin-guard</code>；Expiration 选 7 天或 30 天</li>
+        <li><b>Scope（权限勾选项）一个都不要勾</b> —— 读公开仓库不需要任何权限</li>
+        <li>拉到最下面点 <b>Generate token</b></li>
+        <li>复制 <code>ghp_</code> 开头那一串，粘贴到本页第二个输入框</li>
+      </ol>
+      <div class="note">
+        <b>安全提示：</b>Token 只存在浏览器内存里，刷新页面就没了，不写磁盘、不发送到任何第三方。<br>
+        不要贴进聊天记录、不要 commit 进仓库、不要截图外发。不用了就在 GitHub 设置页点 Delete 立刻作废。
+      </div>
+      <p>填了之后：<b>60 次/小时 → 5000 次/小时</b>，一次体检大约消耗 5 次。</p>
+
+      <h4>三、两种模式怎么选</h4>
+      <table class="tbl">
+        <tr><th>场景</th><th>建议</th></tr>
+        <tr><td>网络正常、额度够</td><td>默认模式。能拿到 commit sha、star 数、同名对照与差分</td></tr>
+        <tr><td>报 403（额度用完）</td><td>什么都不用做，会自动切到零额度模式</td></tr>
+        <tr><td>GitHub 连不上，或不想消耗额度</td><td>勾选「零额度模式」，全程走 jsDelivr</td></tr>
+      </table>
+      <p>零额度模式的代价：拿不到 star、创建时间、fork/归档状态，也做不了同名对照。<b>代码层的检查一项不少。</b></p>
+
+      <h4>四、结论四个档怎么读</h4>
+      <table class="tbl">
+        <tr><th>A</th><td>可以装。代码里没有外发、没有读凭据、没有动态执行。</td></tr>
+        <tr><th>B</th><td>可以装，但要关开关。通常是遥测、定时器，或连了预期内的域名。</td></tr>
+        <tr><th>C</th><td>不建议装。有硬信号：动态执行、未知外发域名、读取凭据、只有压缩产物。</td></tr>
+        <tr><th>D</th><td>不要装。凭据读取与外发闭环、远程加载执行、安装期下载执行。</td></tr>
+      </table>
+
+      <h4>五、报告先看哪三处</h4>
+      <ol>
+        <li><b>第一行结论</b>和下面的「依据」—— 一句话说清为什么是这个档</li>
+        <li><b>外发域名清单</b>—— 标「非预期」的就是它连了不该连的地方</li>
+        <li><b>不可判定</b>—— 诚实清单：静态分析看不出运行时行为、服务端下发、加密载荷内容。<b>没有这一栏的报告不要信。</b></li>
+      </ol>
+
+      <h4>六、常见报错</h4>
+      <table class="tbl">
+        <tr><td><code>403</code></td><td>API 额度用完。等一小时、填 Token，或勾零额度模式</td></tr>
+        <tr><td><code>404</code></td><td>仓库不存在、地址拼错，或私有仓库</td></tr>
+        <tr><td>文件读取失败</td><td>网络抖动。报告里会列出失败的文件，并提示结论可能不完整</td></tr>
+        <tr><td>jsDelivr 找不到仓库</td><td>默认分支不是 main/master。在链接里写明分支再试</td></tr>
+      </table>
+
+      <div class="note">
+        这个工具只读不跑：不 clone、不 <code>npm install</code>、不执行被检代码的任何一行。<br>
+        它的结论是「证据 + 判断」，不是安全保证。
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Github AI 插件装前自检 · 单文件版
+   原则：只读。不 clone、不 npm install、不 build、不执行任何被检代码。
+   ============================================================ */
+
+const API = 'https://api.github.com';
+const RAW = 'https://raw.githubusercontent.com';
+
+// 预期内的域名：这些出现不算异常
+const KNOWN_HOSTS = [
+  'api.deepseek.com','deepseek.com','platform.deepseek.com',
+  'github.com','api.github.com','raw.githubusercontent.com','codeload.github.com',
+  'objects.githubusercontent.com','avatars.githubusercontent.com',
+  'localhost','127.0.0.1','0.0.0.0'
+];
+
+const MAX_FILES = 30;
+const MAX_BYTES = 2_500_000;
+
+let reqCount = 0;
+let rateLeft = null;
+
+/* ---------------- 基础工具 ---------------- */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function log(msg, cls){
+  const el = $('log');
+  const d = document.createElement('div');
+  d.innerHTML = (cls === 'b' ? '<b>' : '') + esc(msg) + (cls === 'b' ? '</b>' : '');
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+function showErr(msg){ const e = $('err'); e.textContent = msg; e.style.display = 'block'; }
+function clearErr(){ $('err').style.display = 'none'; }
+
+/* ---------------- GitHub 访问 ---------------- */
+
+function headers(token){
+  const h = { 'Accept': 'application/vnd.github+json' };
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+}
+
+async function gh(path, token){
+  reqCount++;
+  let r;
+  try {
+    r = await fetch(API + path, { headers: headers(token), cache: 'no-store' });
+  } catch (e){
+    throw new Error('网络请求失败：' + API + path + '\n' + e.message);
+  }
+  const rl = r.headers.get('x-ratelimit-remaining');
+  if (rl !== null) rateLeft = rl;
+  const text = await r.text();
+  if (!r.ok){
+    if (r.status === 403){
+      const err = new Error('GitHub API 403（可能是限额用完）。剩余额度：' + (rateLeft ?? '?') + '\n提示：填一个 Token 可提到 5000 次/小时，或勾选「零额度模式」。');
+      err.rateLimited = true;
+      throw err;
+    }
+    if (r.status === 404) throw new Error('GitHub 返回 404：仓库不存在，或者是私有仓库。');
+    throw new Error('GitHub API ' + r.status + '：' + text.slice(0, 200));
+  }
+  return JSON.parse(text);
+}
+
+function b64utf8(b64){
+  try {
+    const bin = atob(String(b64).replace(/\s/g, ''));
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch { return null; }
+}
+
+/* raw.githubusercontent 在部分网络（尤其国内）不可达，回退到 api.github.com（消耗额度） */
+let fallbackCount = 0;
+let rawFails = 0;
+let rawBroken = false;
+let quotaLow = false;
+
+async function fetchRaw(owner, repo, sha, path){
+  const url = RAW + '/' + owner + '/' + repo + '/' + sha + '/' + path.split('/').map(encodeURIComponent).join('/');
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 4000);
+  try {
+    const r = await fetch(url, { cache: 'no-store', signal: ac.signal });
+    if (r.ok){
+      const t = await r.text();
+      return t.length > 400_000 ? t.slice(0, 400_000) : t;
+    }
+    if (r.status === 404) return null;   // 文件不存在，不必回退
+    throw new Error('raw ' + r.status);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchFile(owner, repo, sha, path, token){
+  if (!rawBroken){
+    try {
+      const direct = await fetchRaw(owner, repo, sha, path);
+      if (direct !== null) return direct;
+      return null;                        // 404：文件确实不存在
+    } catch {
+      rawFails++;
+      if (rawFails >= 3) rawBroken = true; // 连续不通就整体切到 API
+    }
+  }
+  if (quotaLow) return null;
+  if (rateLeft !== null && Number(rateLeft) <= 5){ quotaLow = true; return null; }
+  try {
+    const encoded = path.split('/').map(encodeURIComponent).join('/');
+    const j = await gh('/repos/' + owner + '/' + repo + '/contents/' + encoded + '?ref=' + sha, token);
+    if (j && typeof j === 'object' && j.content && j.encoding === 'base64'){
+      fallbackCount++;
+      return b64utf8(j.content);
+    }
+  } catch { /* 单文件失败不影响整体 */ }
+  return null;
+}
+
+/* ---------------- URL 解析 ---------------- */
+
+function parseGithubUrl(raw){
+  let u;
+  try { u = new URL(raw.trim()); }
+  catch { throw new Error('这不是一个合法 URL'); }
+  if (!/^(www\.)?github\.com$/i.test(u.hostname))
+    throw new Error('目前只支持 github.com 的链接（其他站点后续再接）');
+  const seg = u.pathname.split('/').filter(Boolean);
+  const owner = seg[0];
+  let repo = (seg[1] || '').replace(/\.git$/, '');
+  if (!owner || !repo) throw new Error('链接里缺少 owner/repo，形如 github.com/owner/repo');
+  let ref = null, sub = '';
+  if (seg[2] === 'tree' || seg[2] === 'blob'){
+    ref = seg[3] || null;
+    sub = seg.slice(4).join('/');
+  }
+  return { owner, repo, ref, sub };
+}
+
+/* ---------------- 名称相似度 ---------------- */
+
+function normName(s){
+  return String(s).toLowerCase()
+    .replace(/[\u200b-\u200f\u2060\ufeff]/g, '')
+    .replace(/[-_.\s]/g, '');
+}
+
+function lev(a, b){
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  let prev = Array.from({length: n + 1}, (_, i) => i);
+  for (let i = 1; i <= m; i++){
+    const cur = [i];
+    for (let j = 1; j <= n; j++){
+      cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function similarName(a, b){
+  const x = normName(a), y = normName(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  if (lev(x, y) <= 2) return true;
+  // 后缀搭便车：deepseek-plugin  vs  deepseek-plugin-pro / -plus / -free
+  const s = x.length <= y.length ? x : y;
+  const l = x.length <= y.length ? y : x;
+  if (l.startsWith(s) && l.length - s.length <= 8) return true;
+  return false;
+}
+
+/* ---------------- 规则集 ---------------- */
+
+const RULES = [
+  { id:'CRED-01', g:'凭据', sev:'critical', re:/\bprocess\.env\.[A-Za-z0-9_]*(KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL)[A-Za-z0-9_]*/g,
+    msg:'读取环境变量中的密钥/令牌', fix:'不要把真实 API Key 放进环境变量再跑它；用一次性假 Key 先试' },
+
+  { id:'CRED-02', g:'凭据', sev:'high', re:/(\.ssh\b|id_rsa|id_ed25519|\.aws[\/\\]credentials|\.npmrc|\.netrc|\.git-credentials|Login Data|keychain|find-generic-password)/g,
+    msg:'访问凭据库 / 浏览器登录数据位置', fix:'用独立系统账号或虚拟机运行；拒绝其访问用户主目录' },
+
+  { id:'CRED-03', g:'凭据', sev:'high', re:/\bclipboard\b|readText\s*\(|Get-Clipboard|pbpaste/gi,
+    msg:'读取剪贴板', fix:'安装前清空剪贴板；不要在里面放密钥' },
+
+  { id:'CRED-04', g:'凭据', sev:'high', re:/(auth\.json|\.dsh[\/\\]|credentials\.json|\.npmrc|\.netrc|\.git-credentials)/g,
+    msg:'访问登录态 / 凭据存储文件', fix:'检查它是否在改写 enabledPlugins 之类的自启动配置' },
+
+  { id:'CRED-06', g:'凭据', sev:'info', re:/(settings\.json|config\.json)/g,
+    msg:'提到配置文件（信息级）', fix:'' },
+
+  { id:'CRED-05', g:'凭据', sev:'info', re:/\bprocess\.env\b/g,
+    msg:'访问环境变量（可能含密钥）', fix:'先在干净环境里启动，只给必需变量' },
+
+  { id:'EGRESS-02', g:'外发', sev:'high', re:/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d{2,5})?\b/g,
+    msg:'直接连接 IP 地址（绕过域名审查的常见手法）', fix:'用防火墙拦掉非白名单出站' },
+
+  { id:'EGRESS-03', g:'外发', sev:'high', re:/\b(wss?:\/\/|sendBeacon|new\s+WebSocket)\b/g,
+    msg:'长连接 / beacon 外发通道', fix:'关掉插件的后台常驻权限' },
+
+  { id:'EGRESS-04', g:'外发', sev:'info', re:/\b(fetch|axios|got|request|http\.request|https\.request)\s*\(/g,
+    msg:'存在网络请求调用', fix:'' },
+
+  { id:'EXEC-01', g:'执行', sev:'critical', re:/\beval\s*\(/g,
+    msg:'eval 动态执行字符串', fix:'不要装；若坚持，装后禁用其执行能力' },
+
+  { id:'EXEC-02', g:'执行', sev:'critical', re:/\bnew\s+Function\s*\(/g,
+    msg:'new Function 动态执行', fix:'不要装' },
+
+  { id:'EXEC-03', g:'执行', sev:'critical', re:/\bvm\.(runIn|runNew|compileFunction|Script)/g,
+    msg:'vm 模块执行代码', fix:'不要装' },
+
+  { id:'EXEC-04', g:'执行', sev:'high', re:/\batob\s*\(|Buffer\.from\([^)]{0,80}['"]base64['"]|fromCharCode/gi,
+    msg:'base64 / 字符串解码（常用于藏载荷）', fix:'要求作者说明这段解码后的内容' },
+
+  { id:'EXEC-05', g:'执行', sev:'critical', re:/(child_process|execSync|execFileSync|\bspawnSync\b|(?<!\.)\bexec\s*\(|\bshell\.exec\b)/g,
+    msg:'调用系统命令', fix:'不要装，或限制为无 shell 权限的账号' },
+
+  { id:'EXEC-06', g:'执行', sev:'critical', re:/import\s*\(\s*['"`]https?:/g,
+    msg:'从远程 URL 动态加载代码', fix:'不要装（这是最危险的一类）' },
+
+  { id:'PERSIST-01', g:'持久化', sev:'high', re:/\bsetInterval\s*\(/g,
+    msg:'定时器（心跳 / 轮询）', fix:'关掉插件的自动启动，只在需要时手动开' },
+
+  { id:'PERSIST-02', g:'持久化', sev:'high', re:/(onStartup|sessionStart|onSession|autoStart|enabledPlugins|activate\s*:)/g,
+    msg:'开机 / 会话自动执行钩子', fix:'装后在设置里关掉“启动时自动加载”' },
+
+  { id:'SUP-01', g:'供应链', sev:'critical', re:/"(preinstall|postinstall|prepare|prepublish)"\s*:/g,
+    msg:'安装期生命周期脚本', fix:'装的时候加 --ignore-scripts' },
+
+  { id:'SUP-02', g:'供应链', sev:'critical', re:/(curl\s+-[a-zA-Z]*s|wget\s+-[a-zA-Z]*q)[^|\n]{0,60}\|\s*(sh|bash)|powershell\s+-enc/i,
+    msg:'安装期下载并执行脚本', fix:'不要装' },
+
+  { id:'OBF-01', g:'混淆', sev:'high', re:/(\\x[0-9a-fA-F]{2}){4,}/g,
+    msg:'十六进制转义串（混淆特征）', fix:'要求作者提供未混淆源码' },
+
+  { id:'OBF-02', g:'混淆', sev:'high', re:/(\\u[0-9a-fA-F]{4}){6,}/g,
+    msg:'Unicode 转义串（混淆特征）', fix:'要求作者提供未混淆源码' }
+];
+
+/* ---------------- 文件选择 ---------------- */
+
+const isCode = p => /\.(js|mjs|cjs|jsx|ts|tsx|json)$/i.test(p);
+const skipDir = p => /(^|\/)(node_modules|\.git|test|tests|__tests__|docs?|examples?|fixtures?|coverage)(\/|$)/i.test(p);
+
+function pathJoin(a, b){ return a ? (a.replace(/\/$/, '') + '/' + b.replace(/^\//, '')) : b.replace(/^\//, ''); }
+function depthOf(p){ return p.split('/').length; }
+function dirOf(p){ const i = p.lastIndexOf('/'); return i < 0 ? '' : p.slice(0, i); }
+
+function findPluginRoots(tree, hint){
+  const manifests = tree
+    .filter(e => e.type === 'blob' && /\/(package\.json|manifest\.json|plugin\.json|dsh\.plugin\.json)$/i.test('/' + e.path))
+    .filter(e => !skipDir(e.path) && depthOf(e.path) <= 5)
+    .map(e => dirOf(e.path))
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .sort((a, b) => (a === '' ? -1 : b === '' ? 1 : depthOf(a) - depthOf(b)));
+
+  if (hint) return [hint.replace(/\/$/, '')];
+  return manifests.length ? manifests : [''];
+}
+
+function pickFiles(tree, root){
+  const rel = p => root ? (p.startsWith(root + '/') ? p.slice(root.length + 1) : null) : p;
+  const entries = tree
+    .filter(e => e.type === 'blob')
+    .map(e => ({ ...e, r: rel(e.path) }))
+    .filter(e => e.r !== null && !skipDir(e.r));
+
+  const score = e => {
+    const n = e.r.toLowerCase();
+    let s = 0;
+    if (n === 'package.json') s += 1000;
+    if (/^readme/.test(n)) s += 900;
+    if (/(^|\/)(manifest|plugin|dsh\.plugin)\.json$/.test(n)) s += 800;
+    if (/(telemetry|analytics|track|stat|update|loader|bootstrap|payload)/.test(n)) s += 500;
+    if (/(main|index|cli|entry)/.test(n)) s += 300;
+    if (/\.(js|mjs|cjs|ts)$/.test(n)) s += 100;
+    if (/\.min\.js$/.test(n)) s += 150;
+    s -= depthOf(n) * 5;
+    return s;
+  };
+
+  return entries.sort((a, b) => score(b) - score(a)).slice(0, MAX_FILES);
+}
+
+/* ---------------- 静态分析 ---------------- */
+
+function hostOf(u){ try { return new URL(u).hostname.toLowerCase(); } catch { return null; } }
+
+function isPrivateIp(s){
+  const ip = String(s).split(':')[0];
+  const p = ip.split('.').map(Number);
+  if (p.length !== 4 || p.some(n => isNaN(n))) return false;
+  return p[0] === 127 || p[0] === 10 || p[0] === 0 ||
+         (p[0] === 192 && p[1] === 168) ||
+         (p[0] === 172 && p[1] >= 16 && p[1] <= 31) ||
+         (p[0] === 169 && p[1] === 254);
+}
+
+function analyzeFile(file, content){
+  const findings = [];
+  const code = /\.(js|mjs|cjs|ts|tsx|jsx)$/i.test(file.path) ? stripComments(content) : content;
+  const lines = code.split('\n');
+  const hits = {};
+
+  for (const rule of RULES){
+    const re = new RegExp(rule.re.source, rule.re.flags.includes('g') ? rule.re.flags : rule.re.flags + 'g');
+    let m, n = 0;
+    while ((m = re.exec(code)) !== null && n < 6){
+      n++;
+      const idx = m.index;
+      if (rule.id === 'EGRESS-02' && isPrivateIp(m[0])) continue;  // 127.0.0.1 之类不算外发
+      const lineNo = code.slice(0, idx).split('\n').length;
+      const line = (lines[lineNo - 1] || '').trim().slice(0, 220);
+      findings.push({
+        id: rule.id, group: rule.g, sev: rule.sev, msg: rule.msg, fix: rule.fix,
+        file: file.r, line: lineNo, snippet: line, match: m[0].slice(0, 160)
+      });
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    if (n >= 6) hits[rule.id] = true;
+  }
+  return findings;
+}
+
+/* 去掉 JS 注释再做匹配：注释里的链接不是外发目标，注释里的 eval 也不是危险代码 */
+function stripComments(src){
+  let out = '', i = 0;
+  const n = src.length;
+  let st = null;
+  while (i < n){
+    const c = src[i], d = src[i + 1];
+    if (st){
+      out += c;
+      if (c === '\\'){ out += d || ''; i += 2; continue; }
+      if (c === st) st = null;
+      i++; continue;
+    }
+    if (c === '"' || c === "'" || c === '`'){ st = c; out += c; i++; continue; }
+    if (c === '/' && d === '/'){ while (i < n && src[i] !== '\n') i++; continue; }
+    if (c === '/' && d === '*'){
+      i += 2;
+      while (i < n && !(src[i] === '*' && src[i + 1] === '/')){ if (src[i] === '\n') out += '\n'; i++; }
+      i += 2; continue;
+    }
+    out += c; i++;
+  }
+  return out;
+}
+
+function extractEndpoints(content){
+  const out = [];
+  const re = /https?:\/\/[^\s'"`\)\]<>,;]+/g;
+  let m;
+  while ((m = re.exec(content)) !== null){
+    const idx = m.index;
+    const line = content.slice(0, idx).split('\n').length;
+    out.push({ url: m[0].replace(/[.,;:]+$/, ''), line });
+  }
+  return out;
+}
+
+function entropyBlobs(content){
+  const res = [];
+  const re = /['"`]([A-Za-z0-9+/=]{140,})['"`]/g;
+  let m;
+  while ((m = re.exec(content)) !== null){
+    const s = m[1];
+    const uniq = new Set(s).size / s.length;
+    if (uniq < 0.35) res.push(s.slice(0, 80) + '…（长 ' + s.length + '）');
+  }
+  return res;
+}
+
+/* ---------------- 零额度模式：走 jsDelivr，完全不用 GitHub API ---------------- */
+
+const JSD_DATA = 'https://data.jsdelivr.com/v1/packages/gh';
+// cdn.jsdelivr.net 在部分网络被墙，准备多个镜像，命中一个就记住
+const JSD_HOSTS = ['cdn.jsdelivr.net', 'fastly.jsdelivr.net', 'testingcf.jsdelivr.net', 'gcore.jsdelivr.net'];
+let jsdHost = null;
+let jsdCache = {};
+
+async function jsdJson(url, ms){
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms || 9000);
+  try {
+    const r = await fetch(url, { cache: 'no-store', signal: ac.signal });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+  finally { clearTimeout(timer); }
+}
+
+async function jsdResolve(owner, repo, wantRef){
+  const key = owner + '/' + repo + '@' + (wantRef || '');
+  if (jsdCache[key]) return jsdCache[key];
+  const cands = [];
+  [wantRef, 'main', 'master', 'dev'].forEach(r => { if (r && cands.indexOf(r) < 0) cands.push(r); });
+  for (const ref of cands){
+    const j = await jsdJson(JSD_DATA + '/' + owner + '/' + repo + '@' + encodeURIComponent(ref) + '?structure=flat');
+    if (j && Array.isArray(j.files) && j.files.length){
+      const out = {
+        ref: (typeof j.default === 'string' && j.default) ? j.default : ref,
+        files: j.files.map(f => ({ path: String(f.name).replace(/^\//, ''), type: 'blob', size: f.size || 0 }))
+      };
+      jsdCache[key] = out;
+      jsdCache[owner + '/' + repo + '@' + out.ref] = out;
+      return out;
+    }
+  }
+  throw new Error('jsDelivr 找不到这个仓库：可能是私有仓库，或者默认分支不是 main/master。');
+}
+
+async function jsdFile(owner, repo, ref, path){
+  const tail = '/gh/' + owner + '/' + repo + '@' + encodeURIComponent(ref) + '/' +
+               path.split('/').map(encodeURIComponent).join('/');
+  const hosts = jsdHost ? [jsdHost].concat(JSD_HOSTS.filter(h => h !== jsdHost)) : JSD_HOSTS;
+  for (const h of hosts){
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 6000);
+    try {
+      const r = await fetch('https://' + h + tail, { cache: 'no-store', signal: ac.signal });
+      if (r.ok){
+        jsdHost = h;
+        const t = await r.text();
+        return t.length > 400_000 ? t.slice(0, 400_000) : t;
+      }
+      if (r.status === 404) return null;
+    } catch { /* 换下一个镜像 */ }
+    finally { clearTimeout(timer); }
+  }
+  return null;
+}
+
+async function jsdMeta(t0){
+  const r = await jsdResolve(t0.owner, t0.repo, t0.ref);
+  let stars = null;
+  const j = await jsdJson('https://img.shields.io/github/stars/' + t0.owner + '/' + t0.repo + '.json', 6000);
+  const m = j && /^([\d.]+)\s*([kKmM]?)$/.exec(String(j.message || '').trim());
+  if (m){
+    const n = parseFloat(m[1]);
+    const unit = m[2].toLowerCase();
+    stars = Math.round(n * (unit === 'k' ? 1000 : unit === 'm' ? 1000000 : 1));
+  }
+  return {
+    full_name: t0.owner + '/' + t0.repo,
+    default_branch: r.ref,
+    stargazers_count: stars,
+    forks_count: null, created_at: null, license: null,
+    fork: null, archived: null, disabled: null,
+    _jsd: true
+  };
+}
+
+/* ---------------- 主流程 ---------------- */
+
+async function run(){
+  const token = $('pat').value.trim();
+  const rawUrl = $('url').value.trim();
+  clearErr();
+  $('out').innerHTML = '';
+  $('log').innerHTML = '';
+  $('logcard').style.display = 'block';
+  reqCount = 0;
+  fallbackCount = 0; rawFails = 0; rawBroken = false; quotaLow = false;
+
+  try {
+    if (!rawUrl) throw new Error('先贴一个 GitHub 链接');
+
+    log('[1/7] 解析链接', 'b');
+    const t0 = parseGithubUrl(rawUrl);
+    log('  owner=' + t0.owner + '  repo=' + t0.repo + (t0.ref ? '  ref=' + t0.ref : '') + (t0.sub ? '  sub=' + t0.sub : ''));
+
+    let MODE = ($('jsd') && $('jsd').checked) ? 'jsd' : 'api';
+    log('[2/7] 读取仓库元数据' + (MODE === 'jsd' ? '（jsDelivr 零额度模式）' : ''), 'b');
+    let meta;
+    if (MODE === 'jsd'){
+      meta = await jsdMeta(t0);
+    } else {
+      try {
+        meta = await gh('/repos/' + t0.owner + '/' + t0.repo, token);
+      } catch (e){
+        if (!e.rateLimited) throw e;
+        MODE = 'jsd';
+        log('  ⚠ GitHub API 额度用尽，自动切到零额度模式（jsDelivr）', 'b');
+        meta = await jsdMeta(t0);
+      }
+    }
+    const actual = meta.full_name;
+    const renamed = MODE === 'api' ? actual.toLowerCase() !== (t0.owner + '/' + t0.repo).toLowerCase() : false;
+    if (renamed) log('  ⚠ 仓库已改名/转让：' + actual);
+
+    const ref = t0.ref || meta.default_branch;
+    let commit, sha;
+    if (MODE === 'jsd'){
+      sha = ref;
+      commit = { sha: ref, commit: { author: { date: null } } };
+      log('  快照：' + actual + '@' + ref + '（分支快照，不是固定 commit）');
+    } else {
+      // 注意：/commits/{ref} 返回单个 commit 对象，不是数组
+      commit = await gh('/repos/' + actual + '/commits/' + encodeURIComponent(ref), token);
+      if (!commit || !commit.sha) throw new Error('仓库是空的，没有 commit 可审。');
+      sha = commit.sha;
+      log('  解析到 commit ' + sha.slice(0, 7) + '（' + (commit.commit.author?.date || '?') + '）');
+    }
+
+    log('[3/7] 拉取文件树', 'b');
+    let tree, truncated = false;
+    if (MODE === 'jsd'){
+      const r = await jsdResolve(actual.split('/')[0], actual.split('/')[1], ref);
+      tree = r.files;
+    } else {
+      const treeRes = await gh('/repos/' + actual + '/git/trees/' + sha + '?recursive=1', token);
+      tree = treeRes.tree || [];
+      truncated = !!treeRes.truncated;
+    }
+    if (!tree.length) throw new Error('文件树是空的，无法审计。');
+    log('  共 ' + tree.length + ' 个条目' + (truncated ? '（已截断，大仓库）' : ''));
+
+    log('[4/7] 定位插件根目录并选文件', 'b');
+    const root = findPluginRoots(tree, t0.sub)[0] || '';
+    log('  插件根：/' + (root || '(仓库根)'));
+
+    const picked = pickFiles(tree, root);
+
+    // 用树里的 size 预估总量，避免把大仓库整个拉下来
+    const chosen = [];
+    let budget = 0;
+    for (const e of picked){
+      if (chosen.length >= 14) break;
+      if (budget + (e.size || 0) > MAX_BYTES && chosen.length >= 6) break;
+      budget += (e.size || 0);
+      chosen.push(e);
+    }
+    log('  候选 ' + picked.length + ' 个，按优先级取前 ' + chosen.length + ' 个开始下载');
+
+    const files = [];
+    const failed = [];
+    const ownerName = actual.split('/')[0], repoName = actual.split('/')[1];
+    let cursor = 0;
+    const deadline = Date.now() + 25000; // 整体上限，保证"快一点"
+    async function worker(){
+      while (cursor < chosen.length){
+        const e = chosen[cursor++];
+        if (Date.now() > deadline){ failed.push(e.r); continue; }
+        const content = MODE === 'jsd'
+          ? await jsdFile(ownerName, repoName, ref, e.path)
+          : await fetchFile(ownerName, repoName, sha, e.path, token);
+        if (content === null) failed.push(e.r);
+        else files.push({ r: e.r, path: e.path, content, size: content.length });
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(4, Math.max(1, chosen.length)) }, worker));
+    files.sort((a, b) => a.r.localeCompare(b.r));
+    const bytes = files.reduce((s, f) => s + f.size, 0);
+    log('  实际读到 ' + files.length + ' 个文件，' + (bytes / 1024).toFixed(0) + ' KB' + (fallbackCount ? '（其中 ' + fallbackCount + ' 个走 API 回退）' : ''));
+    if (!files.length) throw new Error('没读到任何文件，无法审计（仓库可能为空，或全是二进制）。');
+
+    log('[5/7] 静态规则 + 端点抽取', 'b');
+    let findings = [];
+    const endpoints = new Map();   // 代码里的外发域名（参与判定）
+    const docHosts = new Map();    // 文档/配置里的链接（只展示，不参与判定）
+    const blobs = [];
+    const egressFiles = new Set();
+    const CODE_EXT = /\.(js|mjs|cjs|ts|tsx|jsx|json|sh|bash|ps1|bat|cmd|py)$/i;
+    // package.json 里的 author.url / homepage / funding 是元数据，不算外发目标
+    const META_JSON = /(^|\/)(package|manifest|plugin|dsh\.plugin)\.json$/i;
+
+    for (const f of files){
+      const isCode = CODE_EXT.test(f.path);
+      const isMeta = META_JSON.test(f.path);
+      const isJs = /\.(js|mjs|cjs|ts|tsx|jsx)$/i.test(f.path);
+      const scanText = isJs ? stripComments(f.content) : f.content;
+      if (isCode){
+        findings = findings.concat(analyzeFile(f, scanText));
+        for (const b of entropyBlobs(scanText)) blobs.push({ file: f.r, blob: b });
+      }
+      const scanLines = scanText.split('\n');
+      for (const ep of extractEndpoints(scanText)){
+        const h = hostOf(ep.url);
+        if (!h) continue;
+        // 只有落在"请求类"上下文里的 URL 才算外发；单纯的文档/帮助链接不算
+        const ctxLine = scanLines[ep.line - 1] || '';
+        const isSink = /fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|\baxios\b|\bgot\s*\(|\.src\s*=|new\s+Image/i.test(ctxLine);
+        const egressable = isCode && !isMeta && isSink;
+        if (egressable) egressFiles.add(f.r);
+        const bucket = egressable ? endpoints : docHosts;
+        if (!bucket.has(h)) bucket.set(h, { host: h, urls: new Set(), files: new Set() });
+        const rec = bucket.get(h);
+        rec.urls.add(ep.url.slice(0, 200));
+        rec.files.add(f.r);
+      }
+    }
+
+    // 强凭据（SSH / 浏览器登录数据 / 剪贴板）× 网络外发 出现在同一个文件 → 数据流闭环
+    // 注意：读自己的 API token 再调对应服务，是正常行为，不算闭环
+    const STRONG_CRED = { 'CRED-02': 1, 'CRED-03': 1, 'CRED-04': 1 };
+    const credFiles = new Set(
+      findings.filter(f => STRONG_CRED[f.id]).map(f => f.file)
+    );
+    for (const file of credFiles){
+      if (!egressFiles.has(file)) continue;
+      findings.push({
+        id:'CHAIN-01', group:'硬拦截', sev:'critical',
+        msg:'同一个文件里既有凭据读取、又有网络外发 —— 数据流闭环',
+        fix:'不要装。这是最典型的窃取模式。',
+        file, line: 0, snippet:'（该文件同时命中 CRED 与 EGRESS，详见上方证据）', match:''
+      });
+    }
+
+    log('[6/7] 同名仓库检索，选 star 最多者为官方初版', 'b');
+    const base = { repo: null, sameName: [], tree: null, note: '' };
+    if (MODE === 'jsd'){
+      base.note = '零额度模式下不做同名对照（需要 GitHub Search API 额度）。';
+      log('  跳过（零额度模式）');
+    } else {
+    try {
+      const q = encodeURIComponent(t0.repo + ' in:name');
+      const search = await gh('/search/repositories?q=' + q + '&sort=stars&order=desc&per_page=15', token);
+      const cands = (search.items || []).filter(x => similarName(x.name, t0.repo));
+      base.sameName = cands.slice(0, 8).map(x => ({
+        full: x.full_name, stars: x.stargazers_count, created: x.created_at, owner: x.owner.login, name: x.name
+      }));
+      const official = cands.slice().sort((a, b) => b.stargazers_count - a.stargazers_count)[0];
+      if (official){
+        base.repo = { full: official.full_name, stars: official.stargazers_count, created: official.created_at, owner: official.owner.login };
+        log('  官方初版（按 star）：' + official.full_name + ' ★' + official.stargazers_count);
+        if (official.full_name.toLowerCase() !== actual.toLowerCase()){
+          const bt = await gh('/repos/' + official.full_name + '/git/trees/' + official.default_branch + '?recursive=1', token);
+          base.tree = bt.tree || [];
+        }
+      } else {
+        base.note = '没有找到同名仓库，跳过差分。';
+      }
+    } catch (e){
+      base.note = '同名检索失败（' + e.message.split('\n')[0] + '），差分不可用。';
+    }
+    }
+
+    log('[7/7] 生成报告', 'b');
+    const report = buildReport({ t0, meta, actual, sha, commit, ref, root, files, findings, endpoints, docHosts, failed, blobs, base, renamed, tree,
+      source: MODE === 'jsd' ? 'jsDelivr（零额度模式）' : 'GitHub API' });
+    render(report);
+    log('完成。' + (MODE === 'jsd' ? '零额度模式，未消耗 GitHub API。' : 'API 请求 ' + reqCount + ' 次，剩余额度 ' + (rateLeft ?? '?')));
+
+  } catch (e){
+    showErr(e.message);
+    log('中止：' + e.message.split('\n')[0]);
+  }
+}
+
+/* ---------------- 裁决 ---------------- */
+
+function buildReport(ctx){
+  const { meta, base, findings, endpoints, docHosts, failed, blobs, files, renamed, actual, t0, sha, commit, root, source } = ctx;
+
+  const has = id => findings.some(f => f.id === id);
+  const unknownHosts = [...endpoints.keys()].filter(h => !KNOWN_HOSTS.includes(h) && !h.endsWith('.githubusercontent.com'));
+  const credHits = findings.filter(f => /^CRED/.test(f.id));
+  const credSerious = credHits.filter(f => f.sev !== 'info');
+  const execHits = findings.filter(f => /^EXEC/.test(f.id) && ['critical'].includes(f.sev));
+  const chain = findings.filter(f => f.id === 'CHAIN-01');
+  const supHits = findings.filter(f => /^SUP/.test(f.id));
+  const distOnly = files.length > 0 && !files.some(f => /\.(js|mjs|cjs|ts)$/.test(f.path) && !/\.min\.js$/.test(f.path)) && files.some(f => /\.min\.js$/.test(f.path));
+
+  // 差分
+  let diff = null;
+  if (base.tree){
+    const setOf = (tree, rootPath) => new Set(tree.filter(e => e.type === 'blob')
+      .map(e => rootPath ? e.path.replace(new RegExp('^' + rootPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/?'), '') : e.path)
+      .filter(p => !skipDir(p)));
+    const mine = setOf(ctx.tree, root);
+    const theirs = setOf(base.tree, '');
+    const added = [...mine].filter(p => !theirs.has(p));
+    const removed = [...theirs].filter(p => !mine.has(p));
+    const common = [...mine].filter(p => theirs.has(p));
+    const sim = common.length + added.length > 0 ? common.length / (common.length + added.length) : 0;
+    diff = { added, removed, common: common.length, sim };
+  }
+
+  // 分档：硬拦截优先，不做加权总分
+  let tier = 'A';
+  const reasons = [];
+
+  const severe = [];
+  if (has('EXEC-06')) severe.push('从远程 URL 加载并执行代码');
+  if (has('SUP-02')) severe.push('安装期下载并执行脚本');
+  if (has('EXEC-01') || has('EXEC-02') || has('EXEC-03')) severe.push('动态执行代码（eval / Function / vm）');
+  if (has('EXEC-05')) severe.push('调用系统命令');
+  if (has('SUP-01')) severe.push('安装期生命周期脚本');
+
+  if (chain.length || has('EXEC-06') || has('SUP-02')){
+    tier = 'D';
+    reasons.push(...(chain.length ? ['凭据读取与外发在同一文件'] : []), ...severe);
+  } else if (severe.length >= 2){
+    tier = 'D'; reasons.push(...severe);
+  } else if (severe.length === 1){
+    tier = 'C'; reasons.push(...severe);
+  } else if (distOnly){
+    tier = 'C'; reasons.push('仓库里只有压缩产物，没有可读源码');
+  } else if (unknownHosts.length){
+    tier = 'C'; reasons.push('存在非预期外发域名：' + unknownHosts.slice(0, 4).join(', '));
+  } else if (credSerious.length){
+    tier = 'C'; reasons.push('读取了凭据类位置：' + [...new Set(credSerious.map(f => f.id))].join(', '));
+  } else if (has('PERSIST-01') || has('PERSIST-02')){
+    tier = 'B'; reasons.push('含定时器或自动执行钩子');
+  } else if (endpoints.size){
+    tier = 'B'; reasons.push('存在网络请求（域名在预期内）');
+  } else {
+    tier = 'A'; reasons.push('未发现凭据读取、动态执行、外发域名');
+  }
+
+  // 一句话
+  const oneliner = {
+    A: '未发现越界行为，可以安装。',
+    B: '可以安装，但装完要把它能联网/自启的开关关掉。',
+    C: '不建议安装，证据显示它做了超出“插件本职”的事。',
+    D: '不要安装。'
+  }[tier];
+
+  // 六问
+  const q1 = endpoints.size
+    ? [...endpoints.entries()].map(([h, v]) => h + (KNOWN_HOSTS.includes(h) ? '' : '（非预期）')).join('、')
+    : '代码里没有发现任何网络地址，它不发数据出去。';
+
+  const q2 = credSerious.length
+    ? '会碰这些位置：' + [...new Set(credSerious.map(f => f.id + ' ' + f.msg))].join('；')
+    : (credHits.length
+        ? '没有发现读取凭据库、登录数据或剪贴板；只出现了对环境变量/配置名的普通引用（信息级）。'
+        : '没有发现读取凭据、密钥、登录数据或剪贴板的代码。');
+
+  const q3 = (has('EXEC-01') || has('EXEC-02') || has('EXEC-03') || has('EXEC-06'))
+    ? '有：' + execHits.map(f => f.id).filter((v, i, a) => a.indexOf(v) === i).join(', ')
+    : (blobs.length ? '有疑似加密/编码载荷（' + blobs.length + ' 处高熵串），但没有发现执行它们的入口。' : '没有发现加密后执行。');
+
+  const q4 = supHits.length
+    ? '有安装期脚本：' + [...new Set(supHits.map(f => f.id))].join(', ')
+    : '没有安装期生命周期脚本；插件按目录装载，安装阶段不会跑 npm。';
+
+  const q5 = (has('PERSIST-01') || has('PERSIST-02'))
+    ? '有：' + [...new Set(findings.filter(f => /^PERSIST/.test(f.id)).map(f => f.id + ' ' + f.msg))].join('；')
+    : '没有发现自动启动或定时外发。';
+
+  // 设置清单
+  const fixes = [...new Set(findings.map(f => f.fix).filter(Boolean))];
+  const general = [];
+  if (tier !== 'A'){
+    general.push('先用一次性假 API Key 启动一次，别用真 Key 试水');
+    general.push('装前把该插件目录单独复制一份留底，方便事后比对哈希');
+  }
+  if (endpoints.size) general.push('出站只放行官方域名，其余在防火墙/代理层拦掉');
+  if (tier === 'D') general.push('直接放弃这个来源，去官方仓库装');
+
+  return { ctx, tier, reasons, oneliner, q1, q2, q3, q4, q5, fixes, general, unknownHosts, endpoints, docHosts, failed, findings, blobs, diff, base, files, meta, actual, sha, commit, root, renamed, distOnly, source };
+}
+
+/* ---------------- 渲染 ---------------- */
+
+function render(R){
+  const { tier, oneliner, reasons, meta, actual, sha, commit, root, files, endpoints, docHosts, failed, findings, blobs, diff, base, q1, q2, q3, q4, q5, fixes, general, unknownHosts, renamed, distOnly, source } = R;
+
+  const sevOrder = { critical: 0, high: 1, info: 2 };
+  const sorted = findings.slice().sort((a, b) => (sevOrder[a.sev] - sevOrder[b.sev]) || a.file.localeCompare(b.file));
+
+  const hasStars = typeof meta.stargazers_count === 'number';
+  const ageDays = meta.created_at ? (Date.now() - new Date(meta.created_at).getTime()) / 86400000 : null;
+  const starsPerDay = (hasStars && ageDays !== null) ? meta.stargazers_count / Math.max(1, ageDays) : null;
+  const warnings = [];
+  if (renamed) warnings.push('仓库被改名或转让过（这是套壳的常见手法）');
+  if (meta.fork) warnings.push('这是一个 fork 仓库，不是原版');
+  if (meta.archived) warnings.push('仓库已归档（archived），不再维护');
+  if (meta.disabled) warnings.push('仓库已被 GitHub 禁用');
+  if (!meta._jsd && !meta.license) warnings.push('没有 License');
+  if (starsPerDay !== null && starsPerDay > 50 && ageDays < 90) warnings.push('新仓库但涨星极快（刷星嫌疑）');
+  if (distOnly) warnings.push('仓库里只有压缩产物，没有可审计源码');
+  const missed = failed || [];
+  if (missed.length) warnings.push(missed.length + ' 个文件读取失败，结论可能不完整：' + missed.slice(0, 6).join(', ') + (missed.length > 6 ? ' …' : ''));
+  if (meta._jsd) warnings.push('零额度模式：star 数、创建时间、是否 fork / 归档、License 这几项拿不到，属于「未检查」，不代表正常。');
+
+  const endpointRows = [...endpoints.entries()]
+    .sort((a, b) => b[1].files.size - a[1].files.size)
+    .map(([h, v]) => {
+      const known = KNOWN_HOSTS.includes(h);
+      return '<tr><td class="mono">' + esc(h) + '</td><td>' +
+        (known ? '<span class="badge b-ok">预期内</span>' : '<span class="badge b-critical">非预期</span>') +
+        '</td><td class="mono">' + v.files.size + ' 个文件</td><td class="mono">' +
+        esc([...v.urls][0] || '') + '</td></tr>';
+    }).join('');
+
+  const docRows = (docHosts && docHosts.size)
+    ? '<div style="margin-top:10px;color:var(--dim);font-size:12px">文档/配置里出现的链接（只展示，不计入外发判定）：</div>' +
+      '<div>' + [...docHosts.keys()].map(h => '<span class="chip">' + esc(h) + '</span>').join('') + '</div>'
+    : '';
+
+  const diffHtml = diff ? (
+    '<table><tr><th>指标</th><th>结果</th></tr>' +
+    '<tr><td class="k">官方初版</td><td class="mono">' + esc(base.repo.full) + '（★' + base.repo.stars + '）</td></tr>' +
+    '<tr><td class="k">文件重合度</td><td>' + (diff.sim * 100).toFixed(0) + '%（共同 ' + diff.common + ' 个文件）</td></tr>' +
+    '<tr><td class="k">它多出的文件</td><td class="mono">' + (diff.added.length ? esc(diff.added.slice(0, 20).join(', ')) + (diff.added.length > 20 ? ' …' : '') : '无') + '</td></tr>' +
+    '<tr><td class="k">它缺少的文件</td><td class="mono">' + (diff.removed.length ? esc(diff.removed.slice(0, 20).join(', ')) + (diff.removed.length > 20 ? ' …' : '') : '无') + '</td></tr>' +
+    '</table>'
+  ) : '<div class="empty">' + esc(base.note || '未做差分') + '</div>';
+
+  const sameNameHtml = base.sameName && base.sameName.length
+    ? '<table><tr><th>仓库</th><th>作者</th><th>★</th><th>创建时间</th></tr>' +
+      base.sameName.map(x => '<tr><td class="mono">' + esc(x.full) +
+        (x.full.toLowerCase() === actual.toLowerCase() ? ' <span class="badge b-info">当前</span>' : '') +
+        (base.repo && x.full === base.repo.full ? ' <span class="badge b-ok">官方初版</span>' : '') +
+        '</td><td class="mono">' + esc(x.owner) + '</td><td>' + x.stars + '</td><td class="mono">' + esc(x.created.slice(0, 10)) + '</td></tr>').join('') +
+      '</table>'
+    : '<div class="empty">没有检索到同名仓库。</div>';
+
+  const owners = new Set((base.sameName || []).map(x => x.owner));
+  const multiAuthor = owners.size > 1
+    ? '<div class="ev high"><div class="h">同一个名字出现了 ' + owners.size + ' 个不同作者</div><div class="m">优先选 star 最多、创建最早的那个；其余按仿冒看待。</div></div>'
+    : '';
+
+  const evHtml = sorted.length ? sorted.map(f =>
+    '<div class="ev ' + f.sev + '">' +
+      '<div class="h"><span class="badge b-' + f.sev + '">' + f.id + '</span> ' + esc(f.msg) + '</div>' +
+      '<div class="m mono">' + esc(f.file) + (f.line ? ':' + f.line : '') + '</div>' +
+      (f.snippet ? '<pre>' + esc(f.snippet) + '</pre>' : '') +
+      (f.fix ? '<div class="m">处理：' + esc(f.fix) + '</div>' : '') +
+    '</div>'
+  ).join('') : '<div class="empty">没有命中任何风险规则。</div>';
+
+  const blobHtml = blobs.length
+    ? blobs.slice(0, 5).map(b => '<div class="ev high"><div class="h">高熵字符串</div><div class="m mono">' + esc(b.file) + '</div><pre>' + esc(b.blob) + '</pre></div>').join('')
+    : '<div class="empty">没有发现高熵编码块。</div>';
+
+  const undecidable = [
+    '运行时行为：插件装了以后到底连哪里、发什么，静态代码只能推断，不能证明。',
+    '服务端下发：如果它从服务器取配置或代码再执行，静态扫描只能看到 loader。',
+    '加密载荷的内容：只做了熵检测，没有解密（解密就要执行，违反原则）。',
+    '未下载的文件：本次只读了 ' + files.length + ' 个文件，超出预算的部分没有看。',
+    '依赖树：没有展开 node_modules，第三方依赖里的后门不在本次范围内。'
+  ];
+  if (meta._jsd){
+    undecidable.push('零额度模式：star 数取自第三方徽章（可能是四舍五入的近似值），创建时间、fork/归档状态、License 均未知。');
+    undecidable.push('零额度模式不做同名对照，所以没有「与官方初版差分」这一节。');
+  }
+
+  $('out').innerHTML =
+  '<div class="verdict show v-' + tier + '">' +
+    '<div class="vtier">VERDICT ' + tier + '</div>' +
+    '<div class="vline">' + esc(oneliner) + '</div>' +
+    (reasons.length ? '<div class="vfix">依据：' + esc(reasons.slice(0, 3).join('；')) + '</div>' : '') +
+    '<div class="vfix">' + (general.length ? '要做的动作：' + esc(general.join('；')) + '。' : '') + '</div>' +
+  '</div>' +
+
+  '<div class="card"><h2>审的是什么</h2><table>' +
+    '<tr><td class="k">仓库</td><td class="mono">' + esc(actual) + (renamed ? ' <span class="badge b-critical">已改名</span>' : '') + '</td></tr>' +
+    '<tr><td class="k">数据源</td><td>' + esc(source || 'GitHub API') + (meta._jsd ? ' <span class="badge b-info">零额度</span>' : '') + '</td></tr>' +
+    '<tr><td class="k">commit</td><td class="mono">' + esc(sha) + '</td></tr>' +
+    '<tr><td class="k">提交时间</td><td class="mono">' + esc(commit.commit.author?.date || (meta._jsd ? '分支快照，无固定时间' : '?')) + '</td></tr>' +
+    '<tr><td class="k">插件根</td><td class="mono">/' + esc(root || '(仓库根)') + '</td></tr>' +
+    '<tr><td class="k">★ / fork</td><td>' + (hasStars ? meta.stargazers_count : '未知') + ' / ' + (meta.forks_count == null ? '未知' : meta.forks_count) + (starsPerDay !== null ? '（' + starsPerDay.toFixed(2) + ' 星/天）' : '') + '</td></tr>' +
+    '<tr><td class="k">创建时间</td><td class="mono">' + (meta.created_at ? esc(meta.created_at.slice(0, 10)) : '未知') + '</td></tr>' +
+    '<tr><td class="k">License</td><td>' + esc(meta.license ? meta.license.spdx_id : (meta._jsd ? '未知' : '无')) + '</td></tr>' +
+    '<tr><td class="k">读了文件</td><td class="mono">' + files.length + ' 个：' + esc(files.map(f => f.r).slice(0, 12).join(', ')) + (files.length > 12 ? ' …' : '') + '</td></tr>' +
+  '</table></div>' +
+
+  '<div class="card"><h2>六问</h2><table>' +
+    '<tr><td class="k">发什么数据到哪</td><td>' + esc(q1) + '</td></tr>' +
+    '<tr><td class="k">读文件/密钥/登录</td><td>' + esc(q2) + '</td></tr>' +
+    '<tr><td class="k">加密后执行</td><td>' + esc(q3) + '</td></tr>' +
+    '<tr><td class="k">安装时下载/执行</td><td>' + esc(q4) + '</td></tr>' +
+    '<tr><td class="k">自启动/自发东西</td><td>' + esc(q5) + '</td></tr>' +
+    '<tr><td class="k">结论</td><td><b>' + tier + '</b> — ' + esc(oneliner) + '</td></tr>' +
+  '</table></div>' +
+
+  '<div class="card"><h2>一、同名对照（star 最多者为官方初版）</h2>' + sameNameHtml + multiAuthor + '</div>' +
+
+  '<div class="card"><h2>二、目录页提醒</h2>' +
+    (warnings.length ? '<ul class="tight">' + warnings.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : '<div class="empty">仓库标志正常（未改名、非 fork、未归档、有 License）。</div>') +
+  '</div>' +
+
+  '<div class="card"><h2>三、与官方初版的差分</h2>' + diffHtml + '</div>' +
+
+  '<div class="card"><h2>外发域名清单（只看代码）</h2>' +
+    (endpointRows ? '<table><tr><th>域名</th><th>判定</th><th>出现</th><th>示例 URL</th></tr>' + endpointRows + '</table>' : '<div class="empty">代码里没有发现任何网络地址。</div>') +
+    docRows +
+  '</div>' +
+
+  '<div class="card"><h2>证据（' + findings.length + ' 条）</h2>' + evHtml + '</div>' +
+
+  '<div class="card"><h2>编码 / 加密载荷</h2>' + blobHtml + '</div>' +
+
+  '<div class="card"><h2>不可判定</h2><ul class="tight">' + undecidable.map(u => '<li>' + esc(u) + '</li>').join('') + '</ul></div>' +
+
+  '<div class="card"><h2>装之前 / 装之后要做的事</h2>' +
+    (fixes.length || general.length
+      ? '<ul class="tight">' + [...general, ...fixes].map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>'
+      : '<div class="empty">按当前证据，不需要额外设置。</div>') +
+  '</div>' +
+
+  '<div class="card"><h2>指纹（装完可以再跑一次比对）</h2>' +
+    '<div class="mono" style="word-break:break-all">' + esc(actual) + '@' + esc(sha) + '</div>' +
+    (meta._jsd ? '<div class="m" style="color:var(--dim);font-size:12px;margin-top:6px">这是分支快照，内容随时可能变；要固定版本，请换用 commit sha 的链接再跑一次。</div>' : '') +
+    '<div class="chip">' + files.length + ' files</div><div class="chip">' + esc(commit.commit.author?.date?.slice(0, 19) || '') + '</div>' +
+  '</div>';
+}
+
+/* ---------------- 绑定 ---------------- */
+
+$('go').addEventListener('click', async () => {
+  $('go').disabled = true;
+  $('go').textContent = '体检中…';
+  try { await run(); }
+  finally { $('go').disabled = false; $('go').textContent = '开始体检'; }
+});
+$('url').addEventListener('keydown', e => { if (e.key === 'Enter') $('go').click(); });
+
+/* ---- 使用教学弹窗 ---- */
+const helpModal = $('modal');
+function openHelp(){ helpModal.classList.add('show'); }
+function closeHelp(){ helpModal.classList.remove('show'); }
+$('help').addEventListener('click', openHelp);
+$('mclose').addEventListener('click', closeHelp);
+helpModal.addEventListener('click', e => { if (e.target === helpModal) closeHelp(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+</script>
+</body>
+</html>
